@@ -28,7 +28,7 @@ app.post('/invoicePrint', (req, res) => {
   const totalDiscount = Number(discount || 0);
   const netTotal = itemsTotal - totalDiscount;
   const totalAmount = ( itemsTotal + totalVat) - totalDiscount
-  const remainingAmount = remaining ?  Math.abs(totalAmount - remaining) : totalAmount;
+  const remainingAmount = remaining ? remaining : itemsTotal + totalVat - totalDiscount;
   
   const printer = new escpos.Printer(usbDevice, options);
 
@@ -60,7 +60,7 @@ app.post('/invoicePrint', (req, res) => {
     .align('lt')
     .size(1,0)
     .text(`${dept}: Table ${table}`)
-    .text(`Waiter: ${waiterName}`)
+    .text(`Waiter: ${waiterName || ''}`)
     .newLine()
     .align('ct')
     .size(1, 0)
@@ -74,7 +74,7 @@ app.post('/invoicePrint', (req, res) => {
     ])
     .tableCustom([
       { text: `Invoice No: ${invoiceNo}`, align: 'LEFT',  width: 0.50},
-      { text: `Number Of Guest: ${guest}`, align: 'RIGHT', width: 0.50},
+      { text: `Number Of Guest: ${guest || ''}`, align: 'RIGHT', width: 0.50},
     ])
     .drawLine()
     .tableCustom([
@@ -118,7 +118,7 @@ app.post('/invoicePrint', (req, res) => {
     .drawLine()
     acc = vat ? acc.tableCustom([
       { text: 'Vat-10.00%:', align: 'LEFT',  width: 0.50},
-      { text: `${numberFix(vatTotal) || 0}`, align: 'RIGHT', width: 0.50},
+      { text: `${numberFix(totalVat) || 0}`, align: 'RIGHT', width: 0.50},
     ]) : acc
     
     acc
@@ -204,7 +204,7 @@ app.post('/tokenPrint', (req, res) => {
       .text(`${dept}: Table ${table}`)
       .spacing()
       .size(0,0)
-      .text(`Waiter: ${waiterName}`)
+      .text(`Waiter: ${waiterName || ''}`)
       .size(1,1)
       .text(`Token No: ${tokenNo}`)
       .size(0,0)
