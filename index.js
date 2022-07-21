@@ -17,8 +17,6 @@ app.post('/invoicePrint', (req, res) => {
   const options = { encoding: "GB18030" /* default */ }
   // encoding is optional
   
-  const tux = path.join(__dirname, 'qr.png');
-
   const {invoiceNo, waiterName, dept, table, note , items, guest, date, time, discount, vat, remaining} = req.body;
 
 
@@ -211,6 +209,116 @@ app.post('/tokenPrint', (req, res) => {
       .text(`Notes: ${note}`)
       .newLine()
       .newLine()
+      .cut()
+      .close();
+      res.json("Print successfully")
+  });
+})
+
+
+app.post('/updateToken', (req, res) => {
+  const printerConfig = escpos.USB.findPrinter()
+  const usbDevice = new escpos.USB(printerConfig[0].idVendor, printerConfig[0].idProduct);
+  const options = { encoding: "GB18030" /* default */ }
+  // encoding is optional
+
+  const {orderSide, invoiceNo, waiterName, tokenNo, dept, table, note, timestamp , cancelItems = [], increaseItems = [], decreaseItems = [], newItems = []} = req.body;
+
+  const deleteItems = cancelItems?.map((item, i) => `${i + 1}-: ${item.name}  -X${item.quantity}`)
+  const quantityDecrease = decreaseItems?.map((item, i) => `${i + 1}-: ${item.name}  -X${item.quantity}`)
+  const quantityIncrease = increaseItems?.map((item, i) => `${i + 1}-: ${item.name}  -X${item.quantity}`)
+  const addNewItems = newItems?.map((item, i) => `${i + 1}-: ${item.name}  -X${item.quantity}`)
+  
+  const printer = new escpos.Printer(usbDevice, options);
+  
+  usbDevice.open(function(error){
+    let accumulator = printer
+    .align('CT')
+    .feed()
+    .size(1, 1)
+    .text(`Update ${orderSide} Items`)
+    .size(0,0)
+    .drawLine()
+    .align('LT')
+    .newLine()
+    .newLine()
+    .newLine()
+    .size(0,0)
+    .text(`Invoice No: ${invoiceNo}`)
+    .spacing()
+    .size(1,0)
+    .font('a')
+    .text('Previous Order Update')
+    .newLine()
+    .align('LT')
+    .size(1,1)
+    .font('b')
+
+    accumulator = cancelItems.length ? accumulator.font('a') : accumulator
+    accumulator = cancelItems.length ?  accumulator.text('Cancel Items') : accumulator
+
+    accumulator = cancelItems.length ? accumulator.font('b') : accumulator
+    accumulator = cancelItems.length ? deleteItems.reduce((acc, item) => {
+      return acc['text'](item)
+    }, accumulator) : accumulator
+    
+    accumulator = cancelItems.length ? accumulator.size(0,0) : accumulator
+    accumulator = cancelItems.length ? accumulator.drawLine() : accumulator
+
+    
+    accumulator = increaseItems.length ? accumulator.size(1,1) : accumulator
+    accumulator = increaseItems.length ? accumulator.font('a') : accumulator
+    accumulator = increaseItems.length ?  accumulator.text('Increase Quantity') : accumulator
+    accumulator = increaseItems.length ? accumulator.font('b') : accumulator
+    accumulator = increaseItems.length ? quantityIncrease.reduce((acc, item) => {
+      return acc['text'](item)
+    }, accumulator) : accumulator
+    
+    accumulator = increaseItems.length ? accumulator.size(0,0) : accumulator
+    accumulator = increaseItems.length ? accumulator.drawLine() : accumulator
+
+    
+    
+    accumulator = decreaseItems.length ?  accumulator.font('a') : accumulator
+    accumulator = decreaseItems.length ?  accumulator.size(1,1) : accumulator
+    accumulator = decreaseItems.length ?  accumulator.text('Decrease Quantity') : accumulator
+    accumulator = decreaseItems.length ?  accumulator.font('b') : accumulator
+    accumulator = decreaseItems.length ? quantityDecrease.reduce((acc, item) => {
+      return acc['text'](item)
+    }, accumulator) : accumulator
+    
+    accumulator = decreaseItems.length ? accumulator.size(0,0) : accumulator
+    accumulator = decreaseItems.length ? accumulator.drawLine() : accumulator
+
+    
+    
+    accumulator = newItems.length ?  accumulator.size(1,1) : accumulator
+    accumulator = newItems.length ?  accumulator.font('a') : accumulator
+    accumulator = newItems.length ?  accumulator.text('Add New Items') : accumulator
+    accumulator = newItems.length ?  accumulator.font('b') : accumulator
+    
+    accumulator = newItems.length ? addNewItems.reduce((acc, item) => {
+      return acc['text'](item)
+    }, accumulator) : accumulator
+
+    accumulator
+    .size(0,3)
+    .drawLine()
+    .size(0,0)
+    .font('a')
+    .text(`Timestamp: ${timestamp}`)
+    .spacing()
+    .size(1,0)
+    .text(`${dept}: Table ${table}`)
+    .spacing()
+    .size(0,0)
+    .text(`Waiter: ${waiterName || ''}`)
+    .size(1,1)
+    .text(`Token No: ${tokenNo}`)
+    .size(0,0)
+    .text(`Notes: ${note}`)
+    .newLine()
+    .newLine()
       .cut()
       .close();
       res.json("Print successfully")
