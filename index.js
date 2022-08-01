@@ -1,7 +1,6 @@
 const express = require('express')
 const cors = require('cors')
 const escpos = require('escpos');
-const path = require('path');
 
 escpos.USB = require('escpos-usb');
 
@@ -26,12 +25,14 @@ app.post('/invoicePrint', (req, res) => {
   const totalDiscount = Number(discount || 0);
   const netTotal = itemsTotal - totalDiscount;
   const totalAmount = ( itemsTotal + totalVat) - totalDiscount
-  const remainingAmount = remaining ? remaining : itemsTotal + totalVat - totalDiscount;
+  const remainingAmount = remaining ? 0 : itemsTotal + totalVat - totalDiscount;
   
   const printer = new escpos.Printer(usbDevice, options);
 
   function numberFix(n) {
-    if(n.toString().length === 2) {
+    if(n.toString().length == 1) {
+      return `${n}.00`
+    } else if (n.toString().length === 2) {
       return `${n}.00`
     } else if(n.toString().length === 3) {
       return `${n}.00`
@@ -173,8 +174,6 @@ app.post('/tokenPrint', (req, res) => {
     .size(0,0)
     .drawLine()
     .align('LT')
-    .newLine()
-    .newLine()
     .newLine()
     .size(0,0)
     .text(`Invoice No: ${invoiceNo}`)
