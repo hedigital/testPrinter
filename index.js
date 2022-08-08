@@ -10,6 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 
+// invoice print
 app.post('/invoicePrint', (req, res) => {
   const printerConfig = escpos.USB.findPrinter()
   const usbDevice = new escpos.USB(printerConfig[0].idVendor, printerConfig[0].idProduct);
@@ -153,6 +154,120 @@ app.post('/invoicePrint', (req, res) => {
 })
 
 
+// work period report print
+app.post('/workPeriodReport', (req, res) => {
+  const printerConfig = escpos.USB.findPrinter()
+  const usbDevice = new escpos.USB(printerConfig[0].idVendor, printerConfig[0].idProduct);
+  const options = { encoding: "GB18030" /* default */ }
+  // encoding is optional
+  
+  const {start, totalWork, dining, takeAway, salesTotal , discount, spDiscount, netTotal, grossTotal,  date, time, vat} = req.body;
+
+  
+  const printer = new escpos.Printer(usbDevice, options);
+
+  function numberFix(n) {
+    if(n.toString().length == 1) {
+      return `${n}.00`
+    } else if (n.toString().length === 2) {
+      return `${n}.00`
+    } else if(n.toString().length === 3) {
+      return `${n}.00`
+    } else if(n.toString().length === 4) {
+      return `${n}.0`
+    } 
+    else {
+      return n
+    }
+  }
+  
+  usbDevice.open(function(error){
+    printer
+    .font('a')
+    .align('ct')
+    .size(1, 1)
+    .text('BON CAFE GULSHAN')
+    .size(0,0)
+    .text('The Royal Paradise, Road-74, House-5 Gulshan-2, Dhaka-1212')
+    .text('Phone# 017545336602, 01933475503')
+    .text('BIN: 003207203-0102')
+    .newLine()
+    .align('ct')
+    .size(1, 0)
+    .text('Work Period Report')
+    .newLine()
+    .size(0,0)
+    .align('lt')
+    .tableCustom([
+      { text: `Date: ${date}`, align: 'LEFT',  width: 0.50},
+      { text: `Time: ${time}`, align: 'RIGHT', width: 0.50},
+    ])
+    .align('ct')
+    .newLine()
+    .text(`Start Time: ${start}`)
+    .text(`Total Work: ${totalWork}`)
+    .align('lt')
+    .drawLine()
+    .tableCustom([
+      { text: 'Heading', align: 'LEFT',  width: 0.50},
+      { text: 'Total Amount', align: 'RIGHT', width: 0.50},
+    ])
+    .drawLine()
+    .font('b')
+    .tableCustom([
+      { text: 'Dining', align: 'LEFT',  width: 0.50},
+      { text: `${numberFix(dining)}`, align: 'RIGHT', width: 0.50},
+    ])
+    .tableCustom([
+      { text: 'Take Away', align: 'LEFT',  width: 0.50},
+      { text: `${numberFix(takeAway)}`, align: 'RIGHT', width: 0.50},
+    ])
+    .drawLine()
+    .tableCustom([
+      { text: 'Sales Total', align: 'LEFT',  width: 0.50},
+      { text: `${numberFix(salesTotal)}`, align: 'RIGHT', width: 0.50},
+    ])
+    .drawLine()
+    .tableCustom([
+      { text: 'Discount', align: 'LEFT',  width: 0.50},
+      { text: `${numberFix(discount)}`, align: 'RIGHT', width: 0.50},
+    ])
+    .tableCustom([
+      { text: 'Special Discount', align: 'LEFT',  width: 0.50},
+      { text: `${numberFix(spDiscount)}`, align: 'RIGHT', width: 0.50},
+    ])
+    .drawLine()
+    .tableCustom([
+      { text: 'Net Total', align: 'LEFT',  width: 0.50},
+      { text: `${numberFix(netTotal)}`, align: 'RIGHT', width: 0.50},
+    ])
+    .drawLine()
+    .tableCustom([
+      { text: 'Vat(10%)', align: 'LEFT',  width: 0.50},
+      { text: `${numberFix(vat)}`, align: 'RIGHT', width: 0.50},
+    ])
+    .drawLine()
+    .tableCustom([
+      { text: 'Gross Total', align: 'LEFT',  width: 0.50},
+      { text: `${numberFix(grossTotal)}`, align: 'RIGHT', width: 0.50},
+    ])
+    .newLine()
+    .newLine()
+    .font('a')
+    .size(0,0)
+    .text('Powered by: HawkEyes')
+    .text('www.hedigital.tech')
+    .align('ct')
+    
+    .newLine()
+    .cut()
+    .close();
+    res.json("Print successfully")
+  });
+})
+
+
+// token print
 app.post('/tokenPrint', (req, res) => {
   const printerConfig = escpos.USB.findPrinter()
   const usbDevice = new escpos.USB(printerConfig[0].idVendor, printerConfig[0].idProduct);
@@ -215,6 +330,7 @@ app.post('/tokenPrint', (req, res) => {
 })
 
 
+// update token print
 app.post('/updateToken', (req, res) => {
   const printerConfig = escpos.USB.findPrinter()
   const usbDevice = new escpos.USB(printerConfig[0].idVendor, printerConfig[0].idProduct);
