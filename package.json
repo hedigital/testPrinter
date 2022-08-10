@@ -15,5 +15,8 @@
     "escpos-usb": "^3.0.0-alpha.4",
     "express": "^4.18.1",
     "nodemon": "^2.0.19"
+  },
+  "overrides": {
+    "usb": "^1.9.2"
   }
 }
