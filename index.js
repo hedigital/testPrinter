@@ -2,7 +2,7 @@ const express = require('express')
 const cors = require('cors')
 const escpos = require('escpos');
 
-escpos.USB = require('escpos-usb');
+escpos.Network = require('escpos-network');
 
 const app = express();
 
@@ -11,8 +11,8 @@ app.use(express.json());
 
 
 app.post('/invoicePrint', (req, res) => {
-  const printerConfig = escpos.USB.findPrinter()
-  const usbDevice = new escpos.USB(printerConfig[0].idVendor, printerConfig[0].idProduct);
+
+  const networkDevice = new escpos.Network('192.168.1.87', 9100);
   const options = { encoding: "GB18030" /* default */ }
   // encoding is optional
   
@@ -27,7 +27,7 @@ app.post('/invoicePrint', (req, res) => {
   const totalAmount = ( itemsTotal + totalVat) - totalDiscount
   const remainingAmount = remaining ? 0 : itemsTotal + totalVat - totalDiscount;
   
-  const printer = new escpos.Printer(usbDevice, options);
+  const printer = new escpos.Printer(networkDevice, options);
 
   function numberFix(n) {
     if(n.toString().length == 1) {
@@ -44,7 +44,7 @@ app.post('/invoicePrint', (req, res) => {
     }
   }
   
-  usbDevice.open(function(error){
+  networkDevice.open(function(error){
     const accumulator = printer
     .font('a')
     .align('ct')
@@ -154,8 +154,7 @@ app.post('/invoicePrint', (req, res) => {
 
 
 app.post('/tokenPrint', (req, res) => {
-  const printerConfig = escpos.USB.findPrinter()
-  const usbDevice = new escpos.USB(printerConfig[0].idVendor, printerConfig[0].idProduct);
+  const networkDevice = new escpos.Network('192.168.1.87', 9100);
   const options = { encoding: "GB18030" /* default */ }
   // encoding is optional
 
@@ -163,9 +162,9 @@ app.post('/tokenPrint', (req, res) => {
 
   const listItems = items.map((item, i) => `${i + 1}-: ${item.name}  -X${item.quantity}`)
   
-  const printer = new escpos.Printer(usbDevice, options);
+  const printer = new escpos.Printer(networkDevice, options);
   
-  usbDevice.open(function(error){
+  networkDevice.open(function(error){
     const accumulator = printer
     .align('CT')
     .feed()
@@ -216,8 +215,7 @@ app.post('/tokenPrint', (req, res) => {
 
 
 app.post('/updateToken', (req, res) => {
-  const printerConfig = escpos.USB.findPrinter()
-  const usbDevice = new escpos.USB(printerConfig[0].idVendor, printerConfig[0].idProduct);
+  const networkDevice = new escpos.Network('192.168.1.87', 9100);
   const options = { encoding: "GB18030" /* default */ }
   // encoding is optional
 
@@ -228,9 +226,9 @@ app.post('/updateToken', (req, res) => {
   const quantityIncrease = increaseItems?.map((item, i) => `${i + 1}-: ${item.name}  -X${item.quantity}`)
   const addNewItems = newItems?.map((item, i) => `${i + 1}-: ${item.name}  -X${item.quantity}`)
   
-  const printer = new escpos.Printer(usbDevice, options);
+  const printer = new escpos.Printer(networkDevice, options);
   
-  usbDevice.open(function(error){
+  networkDevice.open(function(error){
     let accumulator = printer
     .align('CT')
     .feed()
